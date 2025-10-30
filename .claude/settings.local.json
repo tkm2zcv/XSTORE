@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx claude-code-templates@latest:*)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --app --import-alias \"@/*\" --use-npm)",
+      "Read(//c/Users/takuma/マイドライブ/PC/kiwamero coding/**)",
+      "Bash(npx create-next-app@latest twi-kaitori-temp --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm --no-git --skip-install)",
+      "Bash(pkill:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run dev:*)",
+      "Bash(taskkill:*)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(rm:*)",
+      "WebFetch(domain:ui.shadcn.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(curl:*)",
+      "Bash(node scripts/hash-password.js:*)",
+      "Bash(node scripts/check-database.js:*)",
+      "Bash(where:*)",
+      "Bash(ls:*)",
+      "Read(//c/Users/takuma/AppData/Roaming/Claude/**)",
+      "Bash(npm search:*)",
+      "Bash(cat:*)",
+      "Bash(node scripts/setup-initial-data.js:*)",
+      "Bash(node -e:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "WebFetch(domain:web.dev)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

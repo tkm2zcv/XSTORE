@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twitter アカウント買取販売サイト - バックエンドアーキテクチャ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .architecture-diagram {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+
+        .layer {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .layer:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            border-color: #667eea;
+        }
+
+        .layer-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .component {
+            background: white;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .component:hover {
+            background: #f0f4ff;
+            transform: translateX(5px);
+        }
+
+        .component-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .component-desc {
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .data-flow {
+            margin-top: 50px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+
+        .flow-title {
+            font-size: 1.8em;
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .flow-item {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .flow-number {
+            background: #667eea;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .flow-content {
+            flex: 1;
+        }
+
+        .flow-step {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .flow-details {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .tech-stack {
+            margin-top: 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .tech-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .tech-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .tech-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .tech-purpose {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 30px;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: #667eea;
+        }
+
+        .modal-title {
+            color: #667eea;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+        }
+
+        .modal-section {
+            margin: 20px 0;
+        }
+
+        .modal-section-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .modal-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .modal-list li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .modal-list li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #d63384;
+        }
+
+        .arrow {
+            text-align: center;
+            color: #667eea;
+            font-size: 2em;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .architecture-diagram {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+
+        .legend {
+            margin-top: 30px;
+            padding: 20px;
+            background: #fff3cd;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+        }
+
+        .legend-title {
+            font-weight: bold;
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .legend-item {
+            color: #856404;
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏗️ バックエンドアーキテクチャ</h1>
+        <p class="subtitle">Twitter アカウント買取販売サイト - システム構成図</p>
+
+        <!-- アーキテクチャ図 -->
+        <div class="architecture-diagram">
+            <!-- フロントエンド層 -->
+            <div class="layer">
+                <div class="layer-title">🎨 フロントエンド</div>
+                <div class="component" onclick="showModal('nextjs')">
+                    <div class="component-name">Next.js 15 (App Router)</div>
+                    <div class="component-desc">サーバー/クライアントコンポーネント</div>
+                </div>
+                <div class="component" onclick="showModal('pages')">
+                    <div class="component-name">公開ページ</div>
+                    <div class="component-desc">/, /accounts, /purchase</div>
+                </div>
+                <div class="component" onclick="showModal('admin')">
+                    <div class="component-name">管理画面</div>
+                    <div class="component-desc">/admin/*, /login</div>
+                </div>
+                <div class="component" onclick="showModal('ui')">
+                    <div class="component-name">UI コンポーネント</div>
+                    <div class="component-desc">Shadcn/ui + Tailwind CSS</div>
+                </div>
+            </div>
+
+            <!-- バックエンド層 -->
+            <div class="layer">
+                <div class="layer-title">⚙️ バックエンド</div>
+                <div class="component" onclick="showModal('middleware')">
+                    <div class="component-name">Middleware</div>
+                    <div class="component-desc">認証チェック、リダイレクト</div>
+                </div>
+                <div class="component" onclick="showModal('api')">
+                    <div class="component-name">API Routes</div>
+                    <div class="component-desc">/api/accounts, /api/purchase-requests</div>
+                </div>
+                <div class="component" onclick="showModal('auth')">
+                    <div class="component-name">NextAuth.js</div>
+                    <div class="component-desc">JWT認証、セッション管理</div>
+                </div>
+                <div class="component" onclick="showModal('validation')">
+                    <div class="component-name">バリデーション</div>
+                    <div class="component-desc">Zod スキーマ</div>
+                </div>
+                <div class="component" onclick="showModal('ratelimit')">
+                    <div class="component-name">Rate Limiting</div>
+                    <div class="component-desc">API保護、DDoS対策</div>
+                </div>
+            </div>
+
+            <!-- データベース層 -->
+            <div class="layer">
+                <div class="layer-title">💾 データベース</div>
+                <div class="component" onclick="showModal('supabase')">
+                    <div class="component-name">Supabase (PostgreSQL)</div>
+                    <div class="component-desc">マネージドデータベース</div>
+                </div>
+                <div class="component" onclick="showModal('tables')">
+                    <div class="component-name">テーブル</div>
+                    <div class="component-desc">accounts, purchase_requests, admins</div>
+                </div>
+                <div class="component" onclick="showModal('indexes')">
+                    <div class="component-name">インデックス</div>
+                    <div class="component-desc">パフォーマンス最適化</div>
+                </div>
+                <div class="component" onclick="showModal('rls')">
+                    <div class="component-name">Row Level Security</div>
+                    <div class="component-desc">データアクセス制御</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- データフロー -->
+        <div class="data-flow">
+            <h2 class="flow-title">📊 データフロー（買取申込の例）</h2>
+
+            <div class="flow-item">
+                <div class="flow-number">1</div>
+                <div class="flow-content">
+                    <div class="flow-step">ユーザーがフォーム送信</div>
+                    <div class="flow-details"><code>POST /api/purchase-requests</code> - フォームデータを送信</div>
+                </div>
+            </div>
+
+            <div class="flow-item">
+                <div class="flow-number">2</div>
+                <div class="flow-content">
+                    <div class="flow-step">Rate Limiting チェック</div>
+                    <div class="flow-details">同一IPからの連続リクエストを制限（5回/15分）</div>
+                </div>
+            </div>
+
+            <div class="flow-item">
+                <div class="flow-number">3</div>
+                <div class="flow-content">
+                    <div class="flow-step">バリデーション</div>
+                    <div class="flow-details">Zod スキーマでデータ検証（Twitter ID、価格、連絡先など）</div>
+                </div>
+            </div>
+
+            <div class="flow-item">
+                <div class="flow-number">4</div>
+                <div class="flow-content">
+                    <div class="flow-step">データベース保存</div>
+                    <div class="flow-details">Supabase の <code>purchase_requests</code> テーブルにINSERT</div>
+                </div>
+            </div>
+
+            <div class="flow-item">
+                <div class="flow-number">5</div>
+                <div class="flow-content">
+                    <div class="flow-step">ログ記録</div>
+                    <div class="flow-details">構造化ログで申込情報を記録（監視・分析用）</div>
+                </div>
+            </div>
+
+            <div class="flow-item">
+                <div class="flow-number">6</div>
+                <div class="flow-content">
+                    <div class="flow-step">レスポンス返却</div>
+                    <div class="flow-details">成功メッセージとデータをJSON形式で返却</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 技術スタック -->
+        <h2 class="flow-title">🛠️ 技術スタック</h2>
+        <div class="tech-stack">
+            <div class="tech-item">
+                <div class="tech-name">Next.js 15</div>
+                <div class="tech-purpose">フルスタックフレームワーク</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-name">TypeScript</div>
+                <div class="tech-purpose">型安全性</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-name">Supabase</div>
+                <div class="tech-purpose">PostgreSQL + 認証</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-name">NextAuth.js</div>
+                <div class="tech-purpose">JWT認証</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-name">Zod</div>
+                <div class="tech-purpose">スキーマバリデーション</div>
+            </div>
+            <div class="tech-item">
+                <div class="tech-name">Tailwind CSS</div>
+                <div class="tech-purpose">スタイリング</div>
+            </div>
+        </div>
+
+        <!-- 凡例 -->
+        <div class="legend">
+            <div class="legend-title">💡 使い方</div>
+            <div class="legend-item">🖱️ 各コンポーネントをクリックすると詳細情報が表示されます</div>
+            <div class="legend-item">📱 モバイルでも見やすいレスポンシブデザイン</div>
+            <div class="legend-item">📚 詳細なドキュメントは docs/backend-architecture.md を参照</div>
+        </div>
+    </div>
+
+    <!-- モーダル -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script>
+        const modalContent = {
+            nextjs: {
+                title: 'Next.js 15 (App Router)',
+                sections: [
+                    {
+                        title: '概要',
+                        content: 'React ベースのフルスタックフレームワーク。サーバーコンポーネントとクライアントコンポーネントを組み合わせて、パフォーマンスとインタラクティビティを両立します。'
+                    },
+                    {
+                        title: '主な機能',
+                        list: [
+                            'Server Components - サーバーサイドレンダリング',
+                            'Client Components - インタラクティブUI',
+                            'API Routes - バックエンドAPI',
+                            'Middleware - リクエスト処理',
+                            'Image Optimization - 画像最適化',
+                            'TypeScript サポート'
+                        ]
+                    },
+                    {
+                        title: 'ファイルパス',
+                        list: [
+                            'app/ - ページとレイアウト',
+                            'app/api/ - APIエンドポイント',
+                            'middleware.ts - 認証処理'
+                        ]
+                    }
+                ]
+            },
+            pages: {
+                title: '公開ページ',
+                sections: [
+                    {
+                        title: '概要',
+                        content: '一般ユーザーがアクセスできる公開ページ。認証不要でアカウント閲覧や買取申込ができます。'
+                    },
+                    {
+                        title: 'ページ一覧',
+                        list: [
+                            '/ - トップページ（ヒーロー、注目アカウント）',
+                            '/accounts - 販売中アカウント一覧',
+                            '/accounts/[id] - アカウント詳細',
+                            '/purchase - 買取申込フォーム',
+                            '/terms - 利用規約',
+                            '/privacy - プライバシーポリシー'
+                        ]
+                    }
+                ]
+            },
+            admin: {
+                title: '管理画面',
+                sections: [
+                    {
+                        title: '概要',
+                        content: '認証が必要な管理者専用画面。アカウント管理と買取申込の処理を行います。'
+                    },
+                    {
+                        title: 'ページ一覧',
+                        list: [
+                            '/login - ログインページ',
+                            '/admin - ダッシュボード',
+                            '/admin/accounts - アカウント管理',
+                            '/admin/accounts/new - 新規出品',
+                            '/admin/accounts/[id]/edit - 編集',
+                            '/admin/requests - 買取申込管理'
+                        ]
+                    },
+                    {
+                        title: 'セキュリティ',
+                        list: [
+                            'Middleware による認証チェック',
+                            'Layout での二重チェック',
+                            'セッションベース認証',
+                            'CSRF保護'
+                        ]
+                    }
+                ]
+            },
+            ui: {
+                title: 'UI コンポーネント',
+                sections: [
+                    {
+                        title: '概要',
+                        content: 'Shadcn/ui と Tailwind CSS を使用したモダンなUIコンポーネント。'
+                    },
+                    {
+                        title: 'コンポーネント',
+                        list: [
+                            'Button - ボタン',
+                            'Input - 入力フィールド',
+                            'Card - カード',
+                            'Table - テーブル',
+                            'Select - セレクトボックス',
+                            'Dialog - ダイアログ'
+                        ]
+                    },
+                    {
+                        title: 'テーマ',
+                        list: [
+                            'プライマリカラー: Cyan 500',
+                            'ダークモード対応',
+                            'レスポンシブデザイン',
+                            'アクセシビリティ対応'
+                        ]
+                    }
+                ]
+            },
+            middleware: {
+                title: 'Middleware',
+                sections: [
+                    {
+                        title: '概要',
+                        content: 'リクエストを処理する前に実行されるミドルウェア。主に認証チェックとリダイレクトを行います。'
+                    },
+                    {
+                        title: '機能',
+                        list: [
+                            'JWT トークンの検証',
+                            '未認証時のリダイレクト',
+                            'ログインページは保護対象外',
+                            'CallbackURL の保存'
+                        ]
+                    },
+                    {
+                        title: 'ファイルパス',
+                        list: [
+                            'middleware.ts'
+                        ]
+                    }
+                ]
+            },
+            api: {
+                title: 'API Routes',
+                sections: [
+                    {
+                        title: '概要',
+                        content: 'RESTful APIエンドポイント。データの取得・作成・更新・削除を行います。'
+                    },
+                    {
+                        title: 'エンドポイント',
+                        list: [
+                            'GET /api/accounts - アカウント一覧',
+                            'POST /api/accounts - アカウント作成',
+                            'GET /api/accounts/[id] - アカウント詳細',
+                            'PUT /api/accounts/[id] - アカウント更新',
+                            'DELETE /api/accounts/[id] - アカウント削除',
+                            'GET /api/purchase-requests - 買取申込一覧',
+                            'POST /api/purchase-requests - 買取申込作成',
+                            'PATCH /api/purchase-requests/[id] - ステータス更新'
+                        ]
+                    },
+                    {
+                        title: 'セキュリティ',
+                        list: [
+                            '管理者APIは認証必須',
+                            'Rate Limiting',
+                            'Zodバリデーション',
+                            'エラーハンドリング'
+                        ]
+                    }
+                ]
+            },
+            auth: {
+                title: 'NextAuth.js',
+                sections: [
+                    {
+                        title: '概要',
+                        content: 'JWT ベースの認証システム。管理者のログイン・ログアウト・セッション管理を行います。'
+                    },
+                    {
+                        title: '認証フロー',
+                        list: [
+                            '1. ログインフォーム送信',
+                            '2. Supabase で管理者検証',
+                            '3. bcrypt でパスワード照合',
+                            '4. JWT トークン生成',
+                            '5. セッション保存',
+                            '6. 管理画面へリダイレクト'
+                        ]
+                    },
+                    {
+                        title: 'ファイルパス',
+                        list: [
+                            'app/api/auth/[...nextauth]/route.ts',
+                            'lib/auth.ts',
+                            'lib/auth-helpers.ts'
+                        ]
+                    }
+                ]
+            },
+            validation: {
+                title: 'バリデーション (Zod)',
+                sections: [
+                    {
+                        title: '概要',
+                        content: 'TypeScript-first なスキーマ宣言とバリデーションライブラリ。APIの入力データを検証します。'
+                    },
+                    {
+                        title: 'スキーマ',
+                        list: [
+                            'createAccountSchema - アカウント作成',
+                            'updateAccountSchema - アカウント更新',
+                            'createPurchaseRequestSchema - 買取申込',
+                            'loginSchema - ログイン'
+                        ]
+                    },
+                    {
+                        title: 'バリデーション項目',
+                        list: [
+                            'Twitter ID形式チェック',
+                            'メールアドレス形式チェック',
+                            '価格範囲チェック',
+                            '必須項目チェック',
+                            '文字数制限'
+                        ]
+                    },
+                    {
+                        title: 'ファイルパス',
+                        list: [
+                            'lib/validations.ts'
+                        ]
+                    }
+                ]
+            },
+            ratelimit: {
+                title: 'Rate Limiting',
+                sections: [
+                    {
+                        title: '概要',
+                        content: 'API保護のためのレート制限。同一クライアントからの過度なリクエストを防ぎます。'
+                    },
+                    {
+                        title: 'プリセット',
+                        list: [
+                            'STRICT - 10リクエスト/分（管理API）',
+                            'STANDARD - 30リクエスト/分（一般API）',
+                            'AUTH - 5リクエスト/15分（ログイン）',
+                            'PUBLIC_FORM - 5リクエスト/15分（申込フォーム）'
+                        ]
+                    },
+                    {
+                        title: '実装',
+                        list: [
+                            'Sliding Window アルゴリズム',
+                            'IPアドレスベース',
+                            '開発: インメモリストア',
+                            '本番: Upstash Redis（推奨）'
+                        ]
+                    },
+                    {
+                        title: 'ファイルパス',
+                        list: [
+                            'lib/rate-limit.ts'
+                        ]
+                    }
+                ]
+            },
+            supabase: {
+                title: 'Supabase (PostgreSQL)',
+                sections: [
+                    {
+                        title: '概要',
+                        content: 'マネージドPostgreSQLデータベース。リアルタイム機能、認証、ストレージを提供するBaaS（Backend as a Service）。'
+                    },
+                    {
+                        title: '主な機能',
+                        list: [
+                            'PostgreSQL データベース',
+                            'RESTful API 自動生成',
+                            'Row Level Security (RLS)',
+                            'リアルタイム subscriptions',
+                            'ストレージ (将来的に使用)',
+                            'バックアップ・復元'
+                        ]
+                    },
+                    {
+                        title: '接続方法',
+                        list: [
+                            'サーバーサイド: Service Role Key',
+                            'クライアントサイド: Anon Key',
+                            'Connection Pooling',
+                            'SSL/TLS 暗号化'
+                        ]
+                    }
+                ]
+            },
+            tables: {
+                title: 'データベーステーブル',
+                sections: [
+                    {
+                        title: 'accounts テーブル',
+                        list: [
+                            'id (UUID) - プライマリキー',
+                            'username (VARCHAR) - Twitter ID',
+                            'followers_count (INT) - フォロワー数',
+                            'tweets_count (INT) - 投稿数',
+                            'price (INT) - 価格（円）',
+                            'category (VARCHAR) - カテゴリ',
+                            'description (TEXT) - 説明',
+                            'status (VARCHAR) - ステータス',
+                            'image_url (TEXT) - 画像URL'
+                        ]
+                    },
+                    {
+                        title: 'purchase_requests テーブル',
+                        list: [
+                            'id (UUID) - プライマリキー',
+                            'twitter_username (VARCHAR) - Twitter ID',
+                            'desired_price (INT) - 希望価格',
+                            'contact_email (VARCHAR) - メール',
+                            'contact_twitter (VARCHAR) - Twitter連絡先',
+                            'status (VARCHAR) - ステータス',
+                            'created_at (TIMESTAMP) - 作成日時'
+                        ]
+                    },
+                    {
+                        title: 'admins テーブル',
+                        list: [
+                            'id (UUID) - プライマリキー',
+                            'email (VARCHAR) - メールアドレス',
+                            'password_hash (TEXT) - パスワードハッシュ',
+                            'name (VARCHAR) - 名前',
+                            'created_at (TIMESTAMP) - 作成日時'
+                        ]
+                    }
+                ]
+            },
+            indexes: {
+                title: 'インデックス',
+                sections: [
+                    {
+                        title: '概要',
+                        content: 'データベースクエリのパフォーマンスを最適化するためのインデックス。頻繁に検索されるカラムに設定します。'
+                    },
+                    {
+                        title: 'accounts テーブル',
+                        list: [
+                            'idx_accounts_status ON status',
+                            'idx_accounts_category ON category',
+                            'idx_accounts_price ON price',
+                            'idx_accounts_followers ON followers_count'
+                        ]
+                    },
+                    {
+                        title: 'purchase_requests テーブル',
+                        list: [
+                            'idx_purchase_requests_status ON status',
+                            'idx_purchase_requests_created_at ON created_at'
+                        ]
+                    },
+                    {
+                        title: '効果',
+                        list: [
+                            'WHERE句での検索が高速化',
+                            'ORDER BY での並び替えが高速化',
+                            'JOIN 操作が高速化',
+                            'メモリ使用量は増加（トレードオフ）'
+                        ]
+                    }
+                ]
+            },
+            rls: {
+                title: 'Row Level Security (RLS)',
+                sections: [
+                    {
+                        title: '概要',
+                        content: 'PostgreSQL の機能で、行レベルでデータアクセスを制御します。現在は未実装ですが、将来的にセキュリティ強化のために導入可能。'
+                    },
+                    {
+                        title: '推奨ポリシー',
+                        list: [
+                            'accounts: 公開読み取り許可、管理者のみ書き込み',
+                            'purchase_requests: 作成者と管理者のみアクセス',
+                            'admins: 管理者のみアクセス'
+                        ]
+                    },
+                    {
+                        title: '現在の実装',
+                        list: [
+                            'サーバーサイドで認証チェック',
+                            'API Route で権限確認',
+                            'NextAuth.js セッション検証'
+                        ]
+                    }
+                ]
+            }
+        };
+
+        function showModal(key) {
+            const modal = document.getElementById('modal');
+            const modalBody = document.getElementById('modal-body');
+            const content = modalContent[key];
+
+            if (!content) return;
+
+            let html = `<h2 class="modal-title">${content.title}</h2>`;
+
+            content.sections.forEach(section => {
+                html += `<div class="modal-section">`;
+                html += `<div class="modal-section-title">${section.title}</div>`;
+
+                if (section.content) {
+                    html += `<p>${section.content}</p>`;
+                }
+
+                if (section.list) {
+                    html += `<ul class="modal-list">`;
+                    section.list.forEach(item => {
+                        html += `<li>${item}</li>`;
+                    });
+                    html += `</ul>`;
+                }
+
+                html += `</div>`;
+            });
+
+            modalBody.innerHTML = html;
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.remove('active');
+        }
+
+        // モーダル外をクリックしたら閉じる
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // ESCキーで閉じる
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

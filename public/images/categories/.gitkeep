@@ -1,0 +1,12 @@
+# カテゴリー画像ディレクトリ
+
+このディレクトリに以下の画像を配置してください：
+
+- business.jpg - ビジネスカテゴリー用
+- entertainment.jpg - エンタメカテゴリー用
+- sports.jpg - スポーツカテゴリー用
+- news.jpg - ニュースカテゴリー用
+- default.jpg - その他カテゴリー用
+
+推奨サイズ: 800x600px または 1200x800px
+形式: JPG, PNG, WEBP

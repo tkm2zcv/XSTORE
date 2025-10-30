@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="ja" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XSTORE - バックエンドアーキテクチャ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            border: 'hsl(240 3.7% 15.9%)',
+            input: 'hsl(240 3.7% 15.9%)',
+            ring: 'hsl(189 94% 43%)',
+            background: 'hsl(240 10% 3.9%)',
+            foreground: 'hsl(0 0% 98%)',
+            primary: {
+              DEFAULT: 'hsl(189 94% 43%)',
+              foreground: 'hsl(0 0% 9%)',
+            },
+            secondary: {
+              DEFAULT: 'hsl(240 3.7% 15.9%)',
+              foreground: 'hsl(0 0% 98%)',
+            },
+            muted: {
+              DEFAULT: 'hsl(240 3.7% 15.9%)',
+              foreground: 'hsl(240 5% 64.9%)',
+            },
+            accent: {
+              DEFAULT: 'hsl(189 94% 43%)',
+              foreground: 'hsl(0 0% 9%)',
+            },
+            card: {
+              DEFAULT: 'hsl(240 10% 3.9%)',
+              foreground: 'hsl(0 0% 98%)',
+            },
+          },
+          borderRadius: {
+            lg: '0.5rem',
+            md: 'calc(0.5rem - 2px)',
+            sm: 'calc(0.5rem - 4px)',
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    .card {
+      @apply rounded-lg border border-border bg-card text-card-foreground shadow-sm;
+    }
+    .card-header {
+      @apply flex flex-col space-y-1.5 p-6;
+    }
+    .card-title {
+      @apply text-2xl font-semibold leading-none tracking-tight;
+    }
+    .card-description {
+      @apply text-sm text-muted-foreground;
+    }
+    .card-content {
+      @apply p-6 pt-0;
+    }
+    .badge {
+      @apply inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+    }
+    .badge-primary {
+      @apply border-transparent bg-primary text-primary-foreground hover:bg-primary/80;
+    }
+    .badge-secondary {
+      @apply border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80;
+    }
+    .tab-trigger {
+      @apply inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm cursor-pointer;
+    }
+    .flow-arrow {
+      position: relative;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .flow-arrow::before {
+      content: '';
+      position: absolute;
+      width: 2px;
+      height: 100%;
+      background: linear-gradient(to bottom, hsl(189 94% 43%), hsl(189 94% 43% / 0.3));
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .flow-arrow::after {
+      content: '▼';
+      color: hsl(189 94% 43%);
+      font-size: 12px;
+      position: absolute;
+      bottom: -6px;
+    }
+  </style>
+</head>
+<body class="bg-background text-foreground antialiased">
+  <!-- ヘッダー -->
+  <header class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div class="container mx-auto flex h-14 items-center px-4">
+      <div class="mr-4 flex">
+        <a class="mr-6 flex items-center space-x-2" href="#">
+          <span class="text-xl font-bold text-primary">XSTORE</span>
+        </a>
+      </div>
+      <div class="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+        <span class="text-sm text-muted-foreground">Backend Architecture Documentation</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="container mx-auto px-4 py-8 max-w-7xl">
+    <!-- ヒーローセクション -->
+    <section class="mb-12 text-center">
+      <h1 class="text-4xl font-bold tracking-tight mb-4">
+        バックエンドアーキテクチャ
+      </h1>
+      <p class="text-lg text-muted-foreground max-w-2xl mx-auto">
+        Twitterアカウント買取販売サイトのバックエンドシステム構成を<br>
+        図と文章でわかりやすく解説します
+      </p>
+    </section>
+
+    <!-- 概要カード -->
+    <section class="mb-12">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">システム概要</h2>
+          <p class="card-description">3層アーキテクチャで構築されたモダンなWebアプリケーション</p>
+        </div>
+        <div class="card-content">
+          <div class="grid md:grid-cols-3 gap-4">
+            <div class="p-4 border border-border rounded-lg">
+              <div class="text-primary font-semibold mb-2">フロントエンド</div>
+              <div class="text-sm text-muted-foreground">Next.js 15 + React でサーバーサイドレンダリング</div>
+            </div>
+            <div class="p-4 border border-border rounded-lg">
+              <div class="text-primary font-semibold mb-2">バックエンド</div>
+              <div class="text-sm text-muted-foreground">Next.js API Routes + NextAuth.js 認証</div>
+            </div>
+            <div class="p-4 border border-border rounded-lg">
+              <div class="text-primary font-semibold mb-2">データベース</div>
+              <div class="text-sm text-muted-foreground">Supabase PostgreSQL + RLS</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- アーキテクチャ図 -->
+    <section class="mb-12">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">システム構成図</h2>
+          <p class="card-description">リクエストの流れとコンポーネント間の関係</p>
+        </div>
+        <div class="card-content">
+          <div class="max-w-4xl mx-auto">
+            <!-- ユーザー -->
+            <div class="text-center mb-4">
+              <div class="inline-block px-6 py-3 bg-muted rounded-lg">
+                <div class="text-sm font-medium">👤 ユーザー / 管理者</div>
+              </div>
+            </div>
+
+            <div class="flow-arrow"></div>
+
+            <!-- Middleware Layer -->
+            <div class="mb-8 p-6 border-2 border-primary/50 rounded-lg bg-primary/5">
+              <div class="text-center mb-4">
+                <span class="badge badge-primary text-xs">Middleware Layer</span>
+              </div>
+              <div class="grid md:grid-cols-2 gap-4">
+                <div class="p-4 bg-background rounded-lg border border-border">
+                  <div class="font-semibold mb-2">🔐 認証チェック</div>
+                  <div class="text-xs text-muted-foreground">NextAuth.js JWT 検証</div>
+                  <div class="text-xs text-muted-foreground mt-1">Protected routes: /admin/*</div>
+                </div>
+                <div class="p-4 bg-background rounded-lg border border-border">
+                  <div class="font-semibold mb-2">⏱️ レート制限</div>
+                  <div class="text-xs text-muted-foreground">Sliding Window アルゴリズム</div>
+                  <div class="text-xs text-muted-foreground mt-1">API 保護 & DoS 対策</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flow-arrow"></div>
+
+            <!-- Frontend Layer -->
+            <div class="mb-8 p-6 border-2 border-primary/50 rounded-lg bg-primary/5">
+              <div class="text-center mb-4">
+                <span class="badge badge-primary text-xs">Frontend Layer - Next.js 15</span>
+              </div>
+              <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                  <div class="text-sm font-semibold mb-2 text-primary">公開ページ</div>
+                  <div class="space-y-2">
+                    <div class="p-3 bg-background rounded border border-border">
+                      <div class="text-sm">/ - トップページ</div>
+                    </div>
+                    <div class="p-3 bg-background rounded border border-border">
+                      <div class="text-sm">/accounts - アカウント一覧</div>
+                    </div>
+                    <div class="p-3 bg-background rounded border border-border">
+                      <div class="text-sm">/purchase - 買取申込</div>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div class="text-sm font-semibold mb-2 text-primary">管理画面 🔒</div>
+                  <div class="space-y-2">
+                    <div class="p-3 bg-background rounded border border-border">
+                      <div class="text-sm">/admin - ダッシュボード</div>
+                    </div>
+                    <div class="p-3 bg-background rounded border border-border">
+                      <div class="text-sm">/admin/accounts - アカウント管理</div>
+                    </div>
+                    <div class="p-3 bg-background rounded border border-border">
+                      <div class="text-sm">/admin/requests - 申込管理</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flow-arrow"></div>
+
+            <!-- API Layer -->
+            <div class="mb-8 p-6 border-2 border-primary/50 rounded-lg bg-primary/5">
+              <div class="text-center mb-4">
+                <span class="badge badge-primary text-xs">API Layer - Next.js Route Handlers</span>
+              </div>
+              <div class="grid md:grid-cols-3 gap-4">
+                <div class="p-4 bg-background rounded-lg border border-border">
+                  <div class="font-semibold mb-2">認証 API</div>
+                  <div class="text-xs text-muted-foreground space-y-1">
+                    <div>POST /api/auth/signin</div>
+                    <div>POST /api/auth/signout</div>
+                    <div>GET /api/auth/session</div>
+                  </div>
+                </div>
+                <div class="p-4 bg-background rounded-lg border border-border">
+                  <div class="font-semibold mb-2">アカウント API</div>
+                  <div class="text-xs text-muted-foreground space-y-1">
+                    <div>GET /api/accounts</div>
+                    <div>POST /api/accounts 🔒</div>
+                    <div>PATCH /api/accounts/[id] 🔒</div>
+                    <div>DELETE /api/accounts/[id] 🔒</div>
+                  </div>
+                </div>
+                <div class="p-4 bg-background rounded-lg border border-border">
+                  <div class="font-semibold mb-2">申込 API</div>
+                  <div class="text-xs text-muted-foreground space-y-1">
+                    <div>POST /api/purchase-requests</div>
+                    <div>GET /api/purchase-requests 🔒</div>
+                    <div>PATCH /api/purchase-requests/[id] 🔒</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flow-arrow"></div>
+
+            <!-- Database Layer -->
+            <div class="p-6 border-2 border-primary/50 rounded-lg bg-primary/5">
+              <div class="text-center mb-4">
+                <span class="badge badge-primary text-xs">Database Layer - Supabase PostgreSQL</span>
+              </div>
+              <div class="grid md:grid-cols-3 gap-4">
+                <div class="p-4 bg-background rounded-lg border border-border">
+                  <div class="font-semibold mb-2">📊 accounts</div>
+                  <div class="text-xs text-muted-foreground space-y-1">
+                    <div>• username</div>
+                    <div>• followers_count</div>
+                    <div>• price</div>
+                    <div>• status</div>
+                    <div>• category</div>
+                  </div>
+                </div>
+                <div class="p-4 bg-background rounded-lg border border-border">
+                  <div class="font-semibold mb-2">📝 purchase_requests</div>
+                  <div class="text-xs text-muted-foreground space-y-1">
+                    <div>• twitter_username</div>
+                    <div>• desired_price</div>
+                    <div>• contact_email</div>
+                    <div>• status</div>
+                  </div>
+                </div>
+                <div class="p-4 bg-background rounded-lg border border-border">
+                  <div class="font-semibold mb-2">👤 admins</div>
+                  <div class="text-xs text-muted-foreground space-y-1">
+                    <div>• email</div>
+                    <div>• password_hash</div>
+                    <div>• name</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- データフロー -->
+    <section class="mb-12">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">データフローの例</h2>
+          <p class="card-description">買取申込から承認までの流れ</p>
+        </div>
+        <div class="card-content">
+          <div class="space-y-4 max-w-3xl mx-auto">
+            <div class="flex items-start gap-4">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">1</div>
+              <div class="flex-1 p-4 border border-border rounded-lg">
+                <div class="font-semibold mb-1">ユーザーが買取申込フォームを送信</div>
+                <div class="text-sm text-muted-foreground">
+                  フロントエンド: <code class="text-xs bg-muted px-2 py-1 rounded">/purchase</code> ページでフォーム入力
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-4">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">2</div>
+              <div class="flex-1 p-4 border border-border rounded-lg">
+                <div class="font-semibold mb-1">バリデーション実行</div>
+                <div class="text-sm text-muted-foreground">
+                  Zod スキーマで入力値検証（Twitter ID、価格、メールアドレス等）
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-4">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">3</div>
+              <div class="flex-1 p-4 border border-border rounded-lg">
+                <div class="font-semibold mb-1">API リクエスト送信</div>
+                <div class="text-sm text-muted-foreground">
+                  <code class="text-xs bg-muted px-2 py-1 rounded">POST /api/purchase-requests</code>
+                  <div class="mt-1">→ レート制限チェック（1分間に3リクエストまで）</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-4">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">4</div>
+              <div class="flex-1 p-4 border border-border rounded-lg">
+                <div class="font-semibold mb-1">データベースに保存</div>
+                <div class="text-sm text-muted-foreground">
+                  Supabase クライアントで <code class="text-xs bg-muted px-2 py-1 rounded">purchase_requests</code> テーブルに INSERT
+                  <div class="mt-1">初期ステータス: <span class="badge badge-secondary text-xs">pending</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-4">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">5</div>
+              <div class="flex-1 p-4 border border-border rounded-lg">
+                <div class="font-semibold mb-1">管理者が申込を確認</div>
+                <div class="text-sm text-muted-foreground">
+                  管理画面 <code class="text-xs bg-muted px-2 py-1 rounded">/admin/requests</code> で一覧表示
+                  <div class="mt-1">🔒 NextAuth.js セッション必須</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-4">
+              <div class="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">6</div>
+              <div class="flex-1 p-4 border border-border rounded-lg">
+                <div class="font-semibold mb-1">ステータス更新</div>
+                <div class="text-sm text-muted-foreground">
+                  <code class="text-xs bg-muted px-2 py-1 rounded">PATCH /api/purchase-requests/[id]</code>
+                  <div class="mt-1 flex gap-2">
+                    <span class="badge badge-secondary text-xs">pending</span>
+                    <span>→</span>
+                    <span class="badge badge-primary text-xs">reviewing</span>
+                    <span>→</span>
+                    <span class="badge badge-primary text-xs">approved</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 技術スタック -->
+    <section class="mb-12">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">技術スタック詳細</h2>
+          <p class="card-description">各レイヤーで使用している主要技術</p>
+        </div>
+        <div class="card-content">
+          <div class="grid md:grid-cols-2 gap-6">
+            <!-- Frontend -->
+            <div class="space-y-4">
+              <div class="font-semibold text-lg text-primary">フロントエンド</div>
+
+              <div class="p-4 border border-border rounded-lg">
+                <div class="font-semibold mb-2">Next.js 15</div>
+                <ul class="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                  <li>App Router（ファイルベースルーティング）</li>
+                  <li>Server Components（デフォルト）</li>
+                  <li>Client Components（'use client'）</li>
+                  <li>Server Actions</li>
+                </ul>
+              </div>
+
+              <div class="p-4 border border-border rounded-lg">
+                <div class="font-semibold mb-2">UI ライブラリ</div>
+                <ul class="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                  <li>Shadcn/ui - コンポーネント</li>
+                  <li>Tailwind CSS - スタイリング</li>
+                  <li>Lucide React - アイコン</li>
+                </ul>
+              </div>
+
+              <div class="p-4 border border-border rounded-lg">
+                <div class="font-semibold mb-2">状態管理</div>
+                <ul class="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                  <li>React Hooks（useState, useEffect）</li>
+                  <li>Server State（fetch in Server Components）</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Backend -->
+            <div class="space-y-4">
+              <div class="font-semibold text-lg text-primary">バックエンド</div>
+
+              <div class="p-4 border border-border rounded-lg">
+                <div class="font-semibold mb-2">認証・セキュリティ</div>
+                <ul class="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                  <li>NextAuth.js v5 - 認証フレームワーク</li>
+                  <li>JWT - トークンベース認証</li>
+                  <li>bcryptjs - パスワードハッシュ化</li>
+                  <li>Middleware - ルート保護</li>
+                </ul>
+              </div>
+
+              <div class="p-4 border border-border rounded-lg">
+                <div class="font-semibold mb-2">API レイヤー</div>
+                <ul class="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                  <li>Next.js Route Handlers</li>
+                  <li>RESTful API 設計</li>
+                  <li>Zod - スキーマバリデーション</li>
+                  <li>Rate Limiting - API 保護</li>
+                </ul>
+              </div>
+
+              <div class="p-4 border border-border rounded-lg">
+                <div class="font-semibold mb-2">データベース</div>
+                <ul class="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                  <li>Supabase - PostgreSQL BaaS</li>
+                  <li>@supabase/supabase-js - クライアント</li>
+                  <li>Row Level Security (RLS)</li>
+                  <li>インデックス最適化</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- セキュリティ -->
+    <section class="mb-12">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">セキュリティ対策</h2>
+          <p class="card-description">実装されているセキュリティ機能</p>
+        </div>
+        <div class="card-content">
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="p-4 border border-border rounded-lg">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-xl">🔐</span>
+                <div class="font-semibold">認証・認可</div>
+              </div>
+              <ul class="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                <li>JWT トークン検証（Middleware）</li>
+                <li>セッションベース認証（NextAuth.js）</li>
+                <li>Protected Routes（/admin/*）</li>
+                <li>bcrypt パスワードハッシュ（コスト係数: 10）</li>
+              </ul>
+            </div>
+
+            <div class="p-4 border border-border rounded-lg">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-xl">⏱️</span>
+                <div class="font-semibold">レート制限</div>
+              </div>
+              <ul class="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                <li>Sliding Window アルゴリズム</li>
+                <li>API エンドポイント保護</li>
+                <li>DoS 攻撃対策</li>
+                <li>IPベース制限</li>
+              </ul>
+            </div>
+
+            <div class="p-4 border border-border rounded-lg">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-xl">🛡️</span>
+                <div class="font-semibold">入力バリデーション</div>
+              </div>
+              <ul class="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                <li>Zod スキーマバリデーション</li>
+                <li>型安全性（TypeScript）</li>
+                <li>SQL Injection 対策（パラメータ化クエリ）</li>
+                <li>XSS 対策（React 自動エスケープ）</li>
+              </ul>
+            </div>
+
+            <div class="p-4 border border-border rounded-lg">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-xl">📝</span>
+                <div class="font-semibold">ロギング・監視</div>
+              </div>
+              <ul class="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                <li>構造化ログ（JSON 形式）</li>
+                <li>認証イベントログ</li>
+                <li>API リクエストログ</li>
+                <li>エラートラッキング</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- API エンドポイント一覧 -->
+    <section class="mb-12">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">API エンドポイント一覧</h2>
+          <p class="card-description">全APIエンドポイントとその機能</p>
+        </div>
+        <div class="card-content">
+          <div class="space-y-6">
+            <!-- 認証 API -->
+            <div>
+              <div class="font-semibold mb-3 flex items-center gap-2">
+                <span class="badge badge-primary">認証 API</span>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead class="border-b border-border">
+                    <tr class="text-left">
+                      <th class="p-2 font-semibold">メソッド</th>
+                      <th class="p-2 font-semibold">エンドポイント</th>
+                      <th class="p-2 font-semibold">説明</th>
+                      <th class="p-2 font-semibold">認証</th>
+                    </tr>
+                  </thead>
+                  <tbody class="text-muted-foreground">
+                    <tr class="border-b border-border">
+                      <td class="p-2"><span class="badge badge-secondary text-xs">POST</span></td>
+                      <td class="p-2 font-mono text-xs">/api/auth/signin</td>
+                      <td class="p-2">ログイン（メール + パスワード）</td>
+                      <td class="p-2">-</td>
+                    </tr>
+                    <tr class="border-b border-border">
+                      <td class="p-2"><span class="badge badge-secondary text-xs">POST</span></td>
+                      <td class="p-2 font-mono text-xs">/api/auth/signout</td>
+                      <td class="p-2">ログアウト</td>
+                      <td class="p-2">🔒</td>
+                    </tr>
+                    <tr class="border-b border-border">
+                      <td class="p-2"><span class="badge badge-secondary text-xs">GET</span></td>
+                      <td class="p-2 font-mono text-xs">/api/auth/session</td>
+                      <td class="p-2">セッション情報取得</td>
+                      <td class="p-2">-</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- アカウント API -->
+            <div>
+              <div class="font-semibold mb-3 flex items-center gap-2">
+                <span class="badge badge-primary">アカウント API</span>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead class="border-b border-border">
+                    <tr class="text-left">
+                      <th class="p-2 font-semibold">メソッド</th>
+                      <th class="p-2 font-semibold">エンドポイント</th>
+                      <th class="p-2 font-semibold">説明</th>
+                      <th class="p-2 font-semibold">認証</th>
+                    </tr>
+                  </thead>
+                  <tbody class="text-muted-foreground">
+                    <tr class="border-b border-border">
+                      <td class="p-2"><span class="badge badge-secondary text-xs">GET</span></td>
+                      <td class="p-2 font-mono text-xs">/api/accounts</td>
+                      <td class="p-2">アカウント一覧取得（フィルター対応）</td>
+                      <td class="p-2">-</td>
+                    </tr>
+                    <tr class="border-b border-border">
+                      <td class="p-2"><span class="badge badge-secondary text-xs">POST</span></td>
+                      <td class="p-2 font-mono text-xs">/api/accounts</td>
+                      <td class="p-2">新規アカウント出品</td>
+                      <td class="p-2">🔒</td>
+                    </tr>
+                    <tr class="border-b border-border">
+                      <td class="p-2"><span class="badge badge-secondary text-xs">GET</span></td>
+                      <td class="p-2 font-mono text-xs">/api/accounts/[id]</td>
+                      <td class="p-2">アカウント詳細取得</td>
+                      <td class="p-2">-</td>
+                    </tr>
+                    <tr class="border-b border-border">
+                      <td class="p-2"><span class="badge badge-secondary text-xs">PATCH</span></td>
+                      <td class="p-2 font-mono text-xs">/api/accounts/[id]</td>
+                      <td class="p-2">アカウント情報更新</td>
+                      <td class="p-2">🔒</td>
+                    </tr>
+                    <tr class="border-b border-border">
+                      <td class="p-2"><span class="badge badge-secondary text-xs">DELETE</span></td>
+                      <td class="p-2 font-mono text-xs">/api/accounts/[id]</td>
+                      <td class="p-2">アカウント削除</td>
+                      <td class="p-2">🔒</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 買取申込 API -->
+            <div>
+              <div class="font-semibold mb-3 flex items-center gap-2">
+                <span class="badge badge-primary">買取申込 API</span>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead class="border-b border-border">
+                    <tr class="text-left">
+                      <th class="p-2 font-semibold">メソッド</th>
+                      <th class="p-2 font-semibold">エンドポイント</th>
+                      <th class="p-2 font-semibold">説明</th>
+                      <th class="p-2 font-semibold">認証</th>
+                    </tr>
+                  </thead>
+                  <tbody class="text-muted-foreground">
+                    <tr class="border-b border-border">
+                      <td class="p-2"><span class="badge badge-secondary text-xs">POST</span></td>
+                      <td class="p-2 font-mono text-xs">/api/purchase-requests</td>
+                      <td class="p-2">買取申込作成</td>
+                      <td class="p-2">-</td>
+                    </tr>
+                    <tr class="border-b border-border">
+                      <td class="p-2"><span class="badge badge-secondary text-xs">GET</span></td>
+                      <td class="p-2 font-mono text-xs">/api/purchase-requests</td>
+                      <td class="p-2">申込一覧取得</td>
+                      <td class="p-2">🔒</td>
+                    </tr>
+                    <tr class="border-b border-border">
+                      <td class="p-2"><span class="badge badge-secondary text-xs">GET</span></td>
+                      <td class="p-2 font-mono text-xs">/api/purchase-requests/[id]</td>
+                      <td class="p-2">申込詳細取得</td>
+                      <td class="p-2">🔒</td>
+                    </tr>
+                    <tr class="border-b border-border">
+                      <td class="p-2"><span class="badge badge-secondary text-xs">PATCH</span></td>
+                      <td class="p-2 font-mono text-xs">/api/purchase-requests/[id]</td>
+                      <td class="p-2">申込ステータス更新</td>
+                      <td class="p-2">🔒</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 p-4 bg-muted/50 rounded-lg">
+            <div class="text-sm">
+              <div class="font-semibold mb-2">凡例</div>
+              <div class="flex gap-4 text-muted-foreground">
+                <div>🔒 = 認証必須（JWT トークン）</div>
+                <div>- = 公開エンドポイント</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- まとめ -->
+    <section class="mb-12">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">アーキテクチャのポイント</h2>
+        </div>
+        <div class="card-content">
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="p-4 border border-border rounded-lg">
+              <div class="font-semibold mb-2 text-primary">✅ 利点</div>
+              <ul class="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                <li>フルスタック Next.js による統一された開発体験</li>
+                <li>TypeScript で型安全性を確保</li>
+                <li>Middleware による一元的なセキュリティ管理</li>
+                <li>Supabase による簡単なスケーリング</li>
+                <li>モダンな React 18 機能（Server Components）</li>
+              </ul>
+            </div>
+
+            <div class="p-4 border border-border rounded-lg">
+              <div class="font-semibold mb-2 text-primary">🎯 今後の改善点</div>
+              <ul class="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                <li>Redis キャッシュ導入（パフォーマンス向上）</li>
+                <li>RLS ポリシー実装（データベースレベルセキュリティ）</li>
+                <li>Sentry 連携（エラー監視）</li>
+                <li>E2E テスト追加（Playwright）</li>
+                <li>CI/CD パイプライン構築</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- フッター -->
+  <footer class="border-t border-border bg-background">
+    <div class="container mx-auto px-4 py-6 text-center text-sm text-muted-foreground">
+      <p>XSTORE Backend Architecture Documentation - 2025</p>
+    </div>
+  </footer>
+
+  <script>
+    // ダークモード切り替え（オプション）
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark')
+    }
+  </script>
+</body>
+</html>
