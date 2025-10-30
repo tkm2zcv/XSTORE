@@ -79,12 +79,22 @@ export async function PATCH(
     }
 
     const { id } = await params
-    const body = await request.json()
+
+    // リクエストボディのバリデーション（部分更新用に.partial()を使用）
+    const validationResult = await validateRequestBody(
+      request,
+      updateAccountSchema.partial()
+    )
+    if (validationResult instanceof NextResponse) {
+      return validationResult
+    }
+
+    const { data: accountData } = validationResult
     const supabase = createAdminClient()
 
     const { data, error } = await supabase
       .from('accounts')
-      .update(body)
+      .update(accountData)
       .eq('id', id)
       .select()
       .single()

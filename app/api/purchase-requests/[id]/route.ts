@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase'
+import { validateRequestBody } from '@/lib/api-helpers'
 import { handleSupabaseError, handleError, createErrorResponse } from '@/lib/error-handlers'
+import { updatePurchaseRequestSchema } from '@/lib/validations'
 import { checkAuth } from '@/lib/auth-helpers'
 
 export async function GET(
@@ -44,12 +46,22 @@ export async function PATCH(
     }
 
     const { id } = await params
-    const body = await request.json()
+
+    // リクエストボディのバリデーション（部分更新用に.partial()を使用）
+    const validationResult = await validateRequestBody(
+      request,
+      updatePurchaseRequestSchema.partial()
+    )
+    if (validationResult instanceof NextResponse) {
+      return validationResult
+    }
+
+    const { data: requestData } = validationResult
     const supabase = createAdminClient()
 
     const { data, error } = await supabase
       .from('purchase_requests')
-      .update(body)
+      .update(requestData)
       .eq('id', id)
       .select()
       .single()

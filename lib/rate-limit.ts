@@ -63,6 +63,19 @@ export function rateLimit(
   identifier: string,
   config: RateLimitConfig = { limit: 10, window: 60000 }
 ): RateLimitResult {
+  // ⚠️ Production Warning: In-memory rate limiting is not suitable for production
+  // with multiple server instances (horizontal scaling). Consider using:
+  // - @upstash/ratelimit with Vercel KV
+  // - Redis-based rate limiting
+  // - Other distributed rate limiting solutions
+  if (process.env.NODE_ENV === 'production') {
+    console.warn(
+      '⚠️ WARNING: Using in-memory rate limiting in production. ' +
+      'This will not work correctly with multiple server instances. ' +
+      'Consider using @upstash/ratelimit or Redis for production.'
+    )
+  }
+
   const now = Date.now()
   const entry = store.get(identifier)
 

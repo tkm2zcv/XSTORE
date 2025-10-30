@@ -15,7 +15,7 @@ export default async function AdminLayout({
   try {
     session = await requireAuth()
   } catch (error) {
-    redirect('/login')
+    redirect('/admin/login')
   }
 
   return (
