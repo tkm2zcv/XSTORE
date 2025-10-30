@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
+import { logger } from '@/lib/logger'
 
 /**
  * Middleware for protecting admin routes
@@ -32,7 +33,7 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(url)
       }
     } catch (error) {
-      console.error('Middleware authentication error:', error)
+      logger.error('Middleware authentication error', error as Error, { pathname })
       // On error, redirect to login
       const url = new URL('/admin/login', request.url)
       return NextResponse.redirect(url)

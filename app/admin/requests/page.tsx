@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { RequestTable } from '@/components/admin/RequestTable'
+import { logger } from '@/lib/logger'
 import type { PurchaseRequest } from '@/types'
 
 export default function RequestsPage() {
@@ -39,7 +40,7 @@ export default function RequestsPage() {
 
       setRequests(data)
     } catch (error) {
-      console.error('Failed to fetch requests:', error)
+      logger.error('Failed to fetch purchase requests', error as Error)
       setRequests([]) // エラー時も空配列を設定
     } finally {
       setLoading(false)
@@ -72,7 +73,7 @@ export default function RequestsPage() {
         )
       }
     } catch (error) {
-      console.error('Failed to update status:', error)
+      logger.error('Failed to update request status', error as Error, { requestId: id, newStatus: status })
     }
   }
 

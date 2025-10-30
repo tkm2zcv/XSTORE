@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useToast } from '@/hooks/use-toast'
+import { logger } from '@/lib/logger'
 import { Loader2 } from 'lucide-react'
 
 export function PurchaseForm() {
@@ -38,7 +39,10 @@ export function PurchaseForm() {
 
     try {
       // モックデータ - 実際にはSupabaseに保存
-      console.log('Purchase request data:', data)
+      logger.debug('Purchase request data', {
+        twitter_username: data.twitter_username,
+        desired_price: data.desired_price
+      })
 
       // 成功を装う
       await new Promise((resolve) => setTimeout(resolve, 1000))

@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { AccountTable } from '@/components/admin/AccountTable'
+import { logger } from '@/lib/logger'
 import { Plus, Search } from 'lucide-react'
 import type { Account } from '@/types'
 
@@ -45,7 +46,7 @@ export default function AccountsPage() {
 
       setAccounts(data)
     } catch (error) {
-      console.error('Failed to fetch accounts:', error)
+      logger.error('Failed to fetch accounts', error as Error)
       setAccounts([]) // エラー時も空配列を設定
     } finally {
       setLoading(false)
@@ -93,7 +94,7 @@ export default function AccountsPage() {
         )
       }
     } catch (error) {
-      console.error('Failed to update status:', error)
+      logger.error('Failed to update account status', error as Error, { accountId: id, newStatus: status })
     }
   }
 
@@ -107,7 +108,7 @@ export default function AccountsPage() {
         setAccounts((prev) => prev.filter((account) => account.id !== id))
       }
     } catch (error) {
-      console.error('Failed to delete account:', error)
+      logger.error('Failed to delete account', error as Error, { accountId: id })
     }
   }
 

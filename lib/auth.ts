@@ -2,6 +2,7 @@ import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import { createAdminClient } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -50,7 +51,7 @@ export const authOptions: NextAuthOptions = {
             name: admin.name,
           }
         } catch (error) {
-          console.error('Auth error:', error)
+          logger.error('Authentication failed', error as Error, { email: credentials.email })
           return null
         }
       },

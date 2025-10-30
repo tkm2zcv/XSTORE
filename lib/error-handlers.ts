@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { PostgrestError } from '@supabase/supabase-js'
+import { logger } from '@/lib/logger'
 
 /**
  * エラーレスポンスの型
@@ -33,7 +34,11 @@ export function createErrorResponse(
  * Supabase エラーをハンドリング
  */
 export function handleSupabaseError(error: PostgrestError): NextResponse {
-  console.error('Supabase error:', error)
+  logger.error('Supabase database error', new Error(error.message), {
+    code: error.code,
+    details: error.details,
+    hint: error.hint
+  })
 
   // 共通エラーコードの処理
   switch (error.code) {
@@ -79,11 +84,11 @@ export function handleSupabaseError(error: PostgrestError): NextResponse {
  * 汎用エラーハンドラー
  */
 export function handleError(error: unknown): NextResponse {
-  console.error('Unhandled error:', error)
-
   if (error instanceof Error) {
+    logger.error('Unhandled error in API route', error)
     return createErrorResponse(error.message, 500)
   }
 
+  logger.error('Unknown error type', new Error(String(error)))
   return createErrorResponse('予期しないエラーが発生しました', 500)
 }
