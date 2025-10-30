@@ -27,7 +27,12 @@
       "Bash(findstr:*)",
       "WebFetch(domain:web.dev)",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nInitial commit: XSTORE - Twitter Account Marketplace\n\n✨ Features:\n- Complete public pages (home, accounts list, account detail, purchase form)\n- Full admin panel (dashboard, account management, purchase request management)\n- Authentication system with NextAuth.js\n- Supabase integration for database\n- RESTful API with validation and error handling\n\n⚡ Performance:\n- LCP: 200ms (excellent)\n- FCP: 200-756ms (good to excellent)\n- TTFB: 129-648ms (good to excellent)\n- All pages pass Google Core Web Vitals\n\n🎨 UI/UX:\n- Modern design with Shadcn/ui components\n- Responsive layout (mobile-first)\n- Dark mode support\n- Optimized images with Next.js Image component\n\n🔧 Tech Stack:\n- Next.js 15 (App Router)\n- TypeScript\n- Tailwind CSS\n- Supabase (PostgreSQL)\n- NextAuth.js\n\n🤖 Generated with Claude Code (https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git remote:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\ndocs: Add README.md and favicon\n\n✨ New Features:\n- Comprehensive README.md with setup instructions\n- Dynamic favicon generation (app/icon.tsx)\n- Apple touch icon (app/apple-icon.tsx)\n- Enhanced metadata (OGP, Twitter Card, SEO)\n\n📚 Documentation:\n- Project overview and features\n- Installation and setup guide\n- Environment variables configuration\n- Project structure explanation\n- Deployment instructions (Vercel)\n- Performance metrics showcase\n- Contributing guidelines\n\n🎨 UI Improvements:\n- Favicon displays \"X\" on cyan background\n- Apple touch icon with gradient\n- Proper meta tags for SEO and social sharing\n\n🤖 Generated with Claude Code (https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []
