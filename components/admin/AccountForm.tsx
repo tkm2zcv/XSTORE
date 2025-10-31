@@ -134,8 +134,8 @@ export function AccountForm({ account, mode }: AccountFormProps) {
                   setFormData((prev) => ({ ...prev, category: value }))
                 }
               >
-                <SelectTrigger>
-                  <SelectValue />
+                <SelectTrigger id="category">
+                  <SelectValue placeholder="カテゴリーを選択" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ビジネス">ビジネス</SelectItem>
@@ -226,8 +226,8 @@ export function AccountForm({ account, mode }: AccountFormProps) {
                 setFormData((prev) => ({ ...prev, status: value }))
               }
             >
-              <SelectTrigger>
-                <SelectValue />
+              <SelectTrigger id="status">
+                <SelectValue placeholder="ステータスを選択" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="available">販売中</SelectItem>
