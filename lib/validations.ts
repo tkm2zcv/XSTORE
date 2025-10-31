@@ -27,11 +27,26 @@ const emailSchema = z
   .email('正しいメールアドレスを入力してください')
 
 /**
- * URL バリデーション
+ * URL バリデーション（相対パスも許可）
  */
 const urlSchema = z
   .string()
-  .url('正しいURLを入力してください')
+  .refine(
+    (val) => {
+      // 空文字列はOK（optional）
+      if (!val) return true
+      // 相対パス（/で始まる）はOK
+      if (val.startsWith('/')) return true
+      // 完全なURLの場合はURL形式をチェック
+      try {
+        new URL(val)
+        return true
+      } catch {
+        return false
+      }
+    },
+    { message: '正しいURLまたはパスを入力してください' }
+  )
   .optional()
 
 /**
