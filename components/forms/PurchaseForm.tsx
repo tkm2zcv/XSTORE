@@ -38,14 +38,27 @@ export function PurchaseForm() {
     setIsSubmitting(true)
 
     try {
-      // モックデータ - 実際にはSupabaseに保存
-      logger.debug('Purchase request data', {
+      logger.debug('Submitting purchase request', {
         twitter_username: data.twitter_username,
         desired_price: data.desired_price
       })
 
-      // 成功を装う
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      // APIに送信
+      const response = await fetch('/api/purchase-requests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || '送信に失敗しました')
+      }
+
+      const result = await response.json()
+      logger.info('Purchase request created successfully', { requestId: result.data?.id })
 
       toast({
         title: '送信完了',
@@ -54,9 +67,11 @@ export function PurchaseForm() {
 
       router.push('/purchase/success')
     } catch (error) {
+      logger.error('Failed to submit purchase request', error as Error)
+
       toast({
         title: 'エラー',
-        description: '送信に失敗しました。もう一度お試しください。',
+        description: error instanceof Error ? error.message : '送信に失敗しました。もう一度お試しください。',
         variant: 'destructive',
       })
     } finally {

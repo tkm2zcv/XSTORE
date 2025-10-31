@@ -4,24 +4,25 @@ import { validateRequestBody, validateQueryParams } from '@/lib/api-helpers'
 import { handleSupabaseError, handleError } from '@/lib/error-handlers'
 import { createPurchaseRequestSchema, purchaseRequestQuerySchema } from '@/lib/validations'
 import { checkAuth } from '@/lib/auth-helpers'
-import { rateLimit } from '@/lib/rate-limit'
+import { rateLimit, getClientIdentifier, RateLimitPresets } from '@/lib/rate-limit'
 import { logger } from '@/lib/logger'
 
 export async function GET(request: NextRequest) {
   const startTime = Date.now()
+  const url = new URL(request.url)
 
   try {
     // 認証チェック（管理者のみ）
     const authResult = await checkAuth(request)
     if (authResult instanceof NextResponse) {
-      logger.api(request, 401, Date.now() - startTime, { error: 'Unauthorized' })
+      logger.api(request.method, url.pathname, { status: 401, duration: Date.now() - startTime, error: 'Unauthorized' })
       return authResult
     }
 
     // クエリパラメータのバリデーション
     const validationResult = validateQueryParams(request, purchaseRequestQuerySchema)
     if (validationResult instanceof NextResponse) {
-      logger.api(request, 400, Date.now() - startTime, { error: 'Validation failed' })
+      logger.api(request.method, url.pathname, { status: 400, duration: Date.now() - startTime, error: 'Validation failed' })
       return validationResult
     }
 
@@ -72,19 +73,33 @@ export async function POST(request: NextRequest) {
   const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown'
 
   try {
-    // レート制限チェック（公開フォーム: 1分間に3リクエストまで）
-    const rateLimitResult = await rateLimit.check(request, 'PUBLIC_FORM')
+    // レート制限チェック（公開フォーム: 1時間に3リクエストまで）
+    const identifier = getClientIdentifier(request)
+    const rateLimitResult = rateLimit(identifier, RateLimitPresets.PUBLIC_FORM)
+
     if (!rateLimitResult.success) {
-      logger.api(request, 429, Date.now() - startTime, {
-        error: 'Rate limit exceeded',
-        retryAfter: rateLimitResult.retryAfter,
+      const retryAfterSeconds = Math.ceil((rateLimitResult.reset - Date.now()) / 1000)
+
+      logger.warn('Rate limit exceeded', {
+        ip: identifier,
+        endpoint: '/api/purchase-requests',
+        retryAfter: retryAfterSeconds,
       })
+
       return NextResponse.json(
         {
-          error: 'Too many requests. Please try again later.',
-          retryAfter: rateLimitResult.retryAfter,
+          error: 'リクエストが多すぎます。しばらくしてから再度お試しください。',
+          retryAfter: retryAfterSeconds,
         },
-        { status: 429 }
+        {
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': String(RateLimitPresets.PUBLIC_FORM.limit),
+            'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+            'X-RateLimit-Reset': String(rateLimitResult.reset),
+            'Retry-After': String(retryAfterSeconds),
+          }
+        }
       )
     }
 
@@ -119,12 +134,13 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
-      logger.db('purchase_requests', 'INSERT', false, { error: error.message })
+      logger.db('INSERT', 'purchase_requests', { success: false, error: error.message })
       return handleSupabaseError(error)
     }
 
-    logger.db('purchase_requests', 'INSERT', true, { id: data.id })
-    logger.api(request, 201, Date.now() - startTime, { requestId: data.id })
+    const url = new URL(request.url)
+    logger.db('INSERT', 'purchase_requests', { success: true, id: data.id })
+    logger.api(request.method, url.pathname, { status: 201, duration: Date.now() - startTime, requestId: data.id })
 
     return NextResponse.json({ data }, { status: 201 })
   } catch (error) {
